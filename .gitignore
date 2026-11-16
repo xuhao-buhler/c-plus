@@ -1,0 +1,7 @@
+*.exe
+*.o
+.deps/
+build/
+reports/
+*.gcda
+*.gcno

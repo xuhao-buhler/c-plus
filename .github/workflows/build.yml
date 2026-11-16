@@ -1,0 +1,68 @@
+name: Build and test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Check out Unity
+        uses: actions/checkout@v5
+        with:
+          repository: ThrowTheSwitch/Unity
+          ref: v2.6.1
+          path: .deps/Unity
+
+      - name: Create output directories
+        run: mkdir -p build reports
+
+      - name: Install analysis and coverage tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y cppcheck clang-tidy lcov
+
+      - name: Run cppcheck
+        run: >-
+          cppcheck --enable=warning,style,performance,portability
+          --error-exitcode=1 --xml --xml-version=2
+          -DUNIT_TEST -I .deps/Unity/src
+          main.cpp test_main.cpp 2> reports/cppcheck.xml
+
+      - name: Run clang-tidy
+        run: >-
+          clang-tidy -checks=clang-analyzer-*,bugprone-*,performance-*,portability-*
+          main.cpp test_main.cpp -- -std=c++17 -DUNIT_TEST -I.deps/Unity/src
+          > reports/clang-tidy.txt 2>&1
+
+      - name: Build application
+        run: make
+
+      - name: Build and run Unity tests
+        run: |
+          gcc -Wall -Wextra --coverage -I.deps/Unity/src -c .deps/Unity/src/unity.c -o build/unity.o
+          g++ -Wall -Wextra -std=c++17 --coverage -DUNIT_TEST -I.deps/Unity/src \
+            main.cpp test_main.cpp build/unity.o -o build/test_runner
+          ./build/test_runner
+
+      - name: Generate coverage report
+        run: |
+          lcov --capture --directory . --output-file reports/coverage.info
+          lcov --remove reports/coverage.info '*/.deps/*' '*/test_main.cpp' '/usr/*' \
+            --output-file reports/coverage-filtered.info
+          genhtml reports/coverage-filtered.info --output-directory reports/coverage-html
+
+      - name: Upload check reports and build output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-and-check-reports
+          path: |
+            reports/
+            main.exe
+            build/test_runner
+          if-no-files-found: warn
