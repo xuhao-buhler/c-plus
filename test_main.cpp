@@ -15,7 +15,7 @@ void test_run_adds_numbers()
     std::ostringstream error;
 
     TEST_ASSERT_EQUAL_INT(0, run(input, output, error));
-    TEST_ASSERT_EQUAL_STRING("Enter two numbers: Their sum is 5\n", output.str().c_str());
+    TEST_ASSERT_TRUE(output.str() == "Enter two numbers: Their sum is 5\n");
     TEST_ASSERT_TRUE(error.str().empty());
 }
 
@@ -26,7 +26,7 @@ void test_run_adds_negative_numbers()
     std::ostringstream error;
 
     TEST_ASSERT_EQUAL_INT(0, run(input, output, error));
-    TEST_ASSERT_EQUAL_STRING("Enter two numbers: Their sum is -1\n", output.str().c_str());
+    TEST_ASSERT_TRUE(output.str() == "Enter two numbers: Their sum is -1\n");
     TEST_ASSERT_TRUE(error.str().empty());
 }
 
@@ -37,8 +37,8 @@ void test_run_rejects_invalid_input()
     std::ostringstream error;
 
     TEST_ASSERT_EQUAL_INT(1, run(input, output, error));
-    TEST_ASSERT_EQUAL_STRING("Enter two numbers: ", output.str().c_str());
-    TEST_ASSERT_EQUAL_STRING("Please enter two valid numbers.\n", error.str().c_str());
+    TEST_ASSERT_TRUE(output.str() == "Enter two numbers: ");
+    TEST_ASSERT_TRUE(error.str() == "Please enter two valid numbers.\n");
 }
 
 int main()
